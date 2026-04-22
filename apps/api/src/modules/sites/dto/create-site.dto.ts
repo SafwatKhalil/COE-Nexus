@@ -1,6 +1,17 @@
 import { IsString, IsOptional, IsNumber, IsEnum, Min, Max } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { LifecycleStage, ControlStatus } from '@coe-nexus/shared'
+
+type LifecycleStage =
+  | 'prospect'
+  | 'feasibility'
+  | 'entitlement'
+  | 'development'
+  | 'construction'
+  | 'commissioning'
+  | 'operational'
+  | 'decommissioned'
+
+type ControlStatus = 'prospect' | 'loi' | 'optioned' | 'leased' | 'owned' | 'active'
 
 export class CreateSiteDto {
   @ApiPropertyOptional()

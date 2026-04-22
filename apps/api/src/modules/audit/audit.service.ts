@@ -23,8 +23,8 @@ export class AuditService {
         entityType: dto.entityType,
         entityId: dto.entityId,
         action: dto.action,
-        beforeState: dto.beforeState ?? null,
-        afterState: dto.afterState ?? null,
+        beforeState: dto.beforeState ? (dto.beforeState as any) : undefined,
+        afterState: dto.afterState ? (dto.afterState as any) : undefined,
       },
     })
   }
