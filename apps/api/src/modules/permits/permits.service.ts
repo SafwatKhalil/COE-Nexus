@@ -5,6 +5,40 @@ import { PrismaService } from '../../prisma/prisma.service'
 export class PermitsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAll(
+    tenantId: string,
+    filters: {
+      status?: string
+      riskLevel?: string
+      blocking?: boolean
+      page: number
+      limit: number
+    },
+  ) {
+    const { status, riskLevel, blocking, page, limit } = filters
+    const skip = (page - 1) * limit
+
+    const where: any = {
+      site: { tenantId, deletedAt: null },
+      ...(status && { status }),
+      ...(riskLevel && { riskLevel }),
+      ...(blocking !== undefined && { blocking }),
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.permit.findMany({
+        where,
+        include: { site: { select: { id: true, name: true, region: true } } },
+        orderBy: [{ blocking: 'desc' }, { dueDate: 'asc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.permit.count({ where }),
+    ])
+
+    return { items, total, page, limit, pages: Math.ceil(total / limit) }
+  }
+
   async create(tenantId: string, siteId: string, dto: any) {
     await this.verifySiteOwnership(tenantId, siteId)
     const { dueDate, expectedApprovalDate, actualApprovalDate, ...rest } = dto

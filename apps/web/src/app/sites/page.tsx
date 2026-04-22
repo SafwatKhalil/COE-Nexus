@@ -33,13 +33,13 @@ const STAGES = [
 ]
 
 const stageBadgeClass: Record<string, string> = {
-  prospect: 'stage-badge-prospect',
-  feasibility: 'stage-badge-feasibility',
-  entitlement: 'stage-badge-entitlement',
-  development: 'stage-badge-development',
-  construction: 'stage-badge-construction',
-  commissioning: 'stage-badge-commissioning',
-  operational: 'stage-badge-operational',
+  prospect: 'stage-early',
+  feasibility: 'stage-early',
+  entitlement: 'stage-active',
+  development: 'stage-active',
+  construction: 'stage-active',
+  commissioning: 'stage-live',
+  operational: 'stage-live',
 }
 
 function ReadinessBadge({ score }: { score: number | null | undefined }) {
