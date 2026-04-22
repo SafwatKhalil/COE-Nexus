@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && npm run build --workspace=@coe-nexus/web",
+  "outputDirectory": ".next",
+  "installCommand": "cd ../.. && npm install",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@coe_nexus_api_url"
+  }
+}

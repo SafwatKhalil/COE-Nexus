@@ -1,32 +1,70 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: oklch(0.98 0.003 240);
+    --foreground: oklch(0.15 0.02 250);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.15 0.02 250);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.15 0.02 250);
+    --primary: oklch(0.48 0.18 255);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.96 0.005 240);
+    --secondary-foreground: oklch(0.25 0.02 250);
+    --muted: oklch(0.96 0.005 240);
+    --muted-foreground: oklch(0.52 0.01 240);
+    --accent: oklch(0.96 0.005 240);
+    --accent-foreground: oklch(0.25 0.02 250);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.91 0.005 240);
+    --input: oklch(0.91 0.005 240);
+    --ring: oklch(0.48 0.18 255);
+    --radius: 0.5rem;
+    --chart-1: oklch(0.48 0.18 255);
+    --chart-2: oklch(0.55 0.18 160);
+    --chart-3: oklch(0.65 0.18 50);
+    --chart-4: oklch(0.55 0.22 300);
+    --chart-5: oklch(0.60 0.22 30);
+    --sidebar: oklch(0.14 0.025 250);
+    --sidebar-foreground: oklch(0.92 0.005 240);
+    --sidebar-primary: oklch(0.48 0.18 255);
+    --sidebar-primary-foreground: oklch(0.98 0 0);
+    --sidebar-accent: oklch(0.22 0.02 250);
+    --sidebar-accent-foreground: oklch(0.92 0.005 240);
+    --sidebar-border: oklch(0.25 0.02 250);
+    --sidebar-ring: oklch(0.48 0.18 255);
   }
 
   * {
-    border-color: theme('colors.gray.200');
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply antialiased bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  html {
+    @apply font-sans;
   }
 }
 
-@layer components {
-  .badge-stage-prospect { @apply bg-gray-100 text-gray-700; }
-  .badge-stage-feasibility { @apply bg-blue-100 text-blue-700; }
-  .badge-stage-entitlement { @apply bg-yellow-100 text-yellow-700; }
-  .badge-stage-development { @apply bg-orange-100 text-orange-700; }
-  .badge-stage-construction { @apply bg-purple-100 text-purple-700; }
-  .badge-stage-commissioning { @apply bg-indigo-100 text-indigo-700; }
-  .badge-stage-operational { @apply bg-green-100 text-green-700; }
+@layer utilities {
+  .stage-badge-prospect      { @apply bg-slate-100 text-slate-700 border border-slate-200; }
+  .stage-badge-feasibility   { @apply bg-blue-50 text-blue-700 border border-blue-200; }
+  .stage-badge-entitlement   { @apply bg-amber-50 text-amber-700 border border-amber-200; }
+  .stage-badge-development   { @apply bg-orange-50 text-orange-700 border border-orange-200; }
+  .stage-badge-construction  { @apply bg-violet-50 text-violet-700 border border-violet-200; }
+  .stage-badge-commissioning { @apply bg-indigo-50 text-indigo-700 border border-indigo-200; }
+  .stage-badge-operational   { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
 
-  .readiness-high { @apply text-green-600; }
-  .readiness-medium { @apply text-yellow-600; }
-  .readiness-low { @apply text-red-600; }
+  .score-high   { @apply text-emerald-600 bg-emerald-50 border-emerald-200; }
+  .score-medium { @apply text-amber-600 bg-amber-50 border-amber-200; }
+  .score-low    { @apply text-red-600 bg-red-50 border-red-200; }
 }

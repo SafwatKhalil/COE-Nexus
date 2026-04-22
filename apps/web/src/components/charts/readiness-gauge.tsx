@@ -1,6 +1,12 @@
 'use client'
 
-import { cn, readinessBg } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+
+function readinessBg(score: number): string {
+  if (score >= 70) return 'score-high'
+  if (score >= 40) return 'score-medium'
+  return 'score-low'
+}
 
 interface ReadinessGaugeProps {
   score: number

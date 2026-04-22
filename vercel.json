@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build --workspace=@coe-nexus/shared && npm run build --workspace=@coe-nexus/web",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://api.coe-nexus.com/v1/:path*" }
+  ]
+}
