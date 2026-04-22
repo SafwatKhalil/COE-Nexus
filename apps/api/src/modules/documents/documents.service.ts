@@ -5,6 +5,33 @@ import { PrismaService } from '../../prisma/prisma.service'
 export class DocumentsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAll(
+    tenantId: string,
+    filters: { type?: string; search?: string; page: number; limit: number },
+  ) {
+    const { type, search, page, limit } = filters
+    const skip = (page - 1) * limit
+
+    const where: any = {
+      tenantId,
+      ...(type && { documentType: type }),
+      ...(search && { fileName: { contains: search, mode: 'insensitive' } }),
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.document.findMany({
+        where,
+        include: { links: { take: 3 }, uploadedBy: { select: { email: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.document.count({ where }),
+    ])
+
+    return { items, total, page, limit, pages: Math.ceil(total / limit) }
+  }
+
   async create(
     tenantId: string,
     userId: string,

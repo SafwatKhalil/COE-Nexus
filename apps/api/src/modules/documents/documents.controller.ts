@@ -13,6 +13,23 @@ import { TenantId, CurrentUser } from '../../common/decorators/tenant.decorator'
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'List all documents for the tenant' })
+  findAll(
+    @TenantId() tenantId: string,
+    @Query('type') type?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.documentsService.findAll(tenantId, {
+      type,
+      search,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 40,
+    })
+  }
+
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
