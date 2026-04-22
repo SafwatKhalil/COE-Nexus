@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  * {
+    border-color: theme('colors.gray.200');
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .badge-stage-prospect { @apply bg-gray-100 text-gray-700; }
+  .badge-stage-feasibility { @apply bg-blue-100 text-blue-700; }
+  .badge-stage-entitlement { @apply bg-yellow-100 text-yellow-700; }
+  .badge-stage-development { @apply bg-orange-100 text-orange-700; }
+  .badge-stage-construction { @apply bg-purple-100 text-purple-700; }
+  .badge-stage-commissioning { @apply bg-indigo-100 text-indigo-700; }
+  .badge-stage-operational { @apply bg-green-100 text-green-700; }
+
+  .readiness-high { @apply text-green-600; }
+  .readiness-medium { @apply text-yellow-600; }
+  .readiness-low { @apply text-red-600; }
+}

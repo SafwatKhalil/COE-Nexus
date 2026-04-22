@@ -1,0 +1,387 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity & Access
+// ---------------------------------------------------------------------------
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users             User[]
+  sites             Site[]
+  scenarios         Scenario[]
+  documents         Document[]
+  auditEvents       AuditEvent[]
+  scoringWeights    TenantScoringWeights?
+
+  @@map("tenants")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  email        String   @unique
+  name         String?
+  role         String   // UserRole enum values
+  passwordHash String?  @map("password_hash")
+  authProvider String?  @map("auth_provider")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant         Tenant       @relation(fields: [tenantId], references: [id])
+  createdSites   Site[]       @relation("SiteCreatedBy")
+  ownedPermits   Permit[]     @relation("PermitOwner")
+  ownedTasks     Task[]       @relation("TaskOwner")
+  uploadedDocs   Document[]
+  createdScenarios Scenario[]
+  auditEvents    AuditEvent[]
+
+  @@map("users")
+}
+
+model TenantScoringWeights {
+  tenantId          String @id @map("tenant_id")
+  weightLand        Float  @default(0.25) @map("weight_land")
+  weightUtility     Float  @default(0.30) @map("weight_utility")
+  weightPermits     Float  @default(0.20) @map("weight_permits")
+  weightEnvironmental Float @default(0.10) @map("weight_environmental")
+  weightSchedule    Float  @default(0.10) @map("weight_schedule")
+  weightStrategic   Float  @default(0.05) @map("weight_strategic")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_scoring_weights")
+}
+
+// ---------------------------------------------------------------------------
+// Site Registry
+// ---------------------------------------------------------------------------
+
+model Site {
+  id               String    @id @default(uuid())
+  tenantId         String    @map("tenant_id")
+  siteCode         String?   @unique @map("site_code")
+  name             String
+  country          String?
+  region           String?
+  metro            String?
+  latitude         Decimal?
+  longitude        Decimal?
+  address          String?
+  lifecycleStage   String    @default("prospect") @map("lifecycle_stage")
+  controlStatus    String    @default("prospect") @map("control_status")
+  zoningStatus     String?   @map("zoning_status")
+  strategicPriority Int?     @map("strategic_priority")
+  targetMw         Decimal?  @map("target_mw")
+  deliverableMw    Decimal?  @map("deliverable_mw")
+  notes            String?
+  createdById      String?   @map("created_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  tenant              Tenant                   @relation(fields: [tenantId], references: [id])
+  createdBy           User?                    @relation("SiteCreatedBy", fields: [createdById], references: [id])
+  parcels             Parcel[]
+  utilities           Utility[]
+  permits             Permit[]
+  environmentalConstraints EnvironmentalConstraint[]
+  tasks               Task[]
+  readinessSnapshots  ReadinessSnapshot[]
+  capacityForecasts   CapacityForecast[]
+
+  @@index([tenantId])
+  @@index([region])
+  @@index([lifecycleStage])
+  @@map("sites")
+}
+
+model Parcel {
+  id                    String    @id @default(uuid())
+  siteId                String    @map("site_id")
+  apn                   String?
+  acreage               Decimal?
+  ownershipType         String?   @map("ownership_type")
+  acquisitionDate       DateTime? @map("acquisition_date")
+  saleOptionExpiration  DateTime? @map("sale_option_expiration")
+  zoningClassification  String?   @map("zoning_classification")
+  environmentalStatus   String?   @map("environmental_status")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  site Site @relation(fields: [siteId], references: [id])
+
+  @@index([siteId])
+  @@map("parcels")
+}
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
+
+model Utility {
+  id                    String    @id @default(uuid())
+  siteId                String    @map("site_id")
+  utilityType           String    @map("utility_type")
+  providerName          String?   @map("provider_name")
+  status                String    @default("under_study")
+  availableCapacity     Decimal?  @map("available_capacity")
+  committedCapacity     Decimal?  @map("committed_capacity")
+  unit                  String?
+  estimatedDeliveryDate DateTime? @map("estimated_delivery_date")
+  actualDeliveryDate    DateTime? @map("actual_delivery_date")
+  confidenceScore       Decimal?  @map("confidence_score")
+  riskLevel             String?   @map("risk_level")
+  notes                 String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  site         Site          @relation(fields: [siteId], references: [id])
+  powerDetails PowerDetails?
+
+  @@index([siteId])
+  @@index([utilityType])
+  @@map("utilities")
+}
+
+model PowerDetails {
+  utilityId                String  @id @map("utility_id")
+  voltageLevel             String? @map("voltage_level")
+  substationName           String? @map("substation_name")
+  feederStatus             String? @map("feeder_status")
+  queuePosition            String? @map("queue_position")
+  interconnectionRequired  Boolean? @map("interconnection_required")
+  energizationDependency   String? @map("energization_dependency")
+
+  utility Utility @relation(fields: [utilityId], references: [id])
+
+  @@map("power_details")
+}
+
+// ---------------------------------------------------------------------------
+// Permitting & Environmental
+// ---------------------------------------------------------------------------
+
+model Permit {
+  id                  String    @id @default(uuid())
+  siteId              String    @map("site_id")
+  permitType          String    @map("permit_type")
+  agencyName          String?   @map("agency_name")
+  status              String    @default("not_started")
+  required            Boolean   @default(true)
+  blocking            Boolean   @default(false)
+  ownerUserId         String?   @map("owner_user_id")
+  dueDate             DateTime? @map("due_date")
+  expectedApprovalDate DateTime? @map("expected_approval_date")
+  actualApprovalDate  DateTime? @map("actual_approval_date")
+  riskLevel           String?   @map("risk_level")
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  site      Site  @relation(fields: [siteId], references: [id])
+  ownerUser User? @relation("PermitOwner", fields: [ownerUserId], references: [id])
+
+  @@index([siteId])
+  @@index([status])
+  @@map("permits")
+}
+
+model EnvironmentalConstraint {
+  id             String   @id @default(uuid())
+  siteId         String   @map("site_id")
+  constraintType String   @map("constraint_type")
+  status         String?
+  severity       String?
+  blocking       Boolean  @default(false)
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  site Site @relation(fields: [siteId], references: [id])
+
+  @@index([siteId])
+  @@map("environmental_constraints")
+}
+
+// ---------------------------------------------------------------------------
+// Scheduling
+// ---------------------------------------------------------------------------
+
+model Task {
+  id              String    @id @default(uuid())
+  siteId          String    @map("site_id")
+  parentTaskId    String?   @map("parent_task_id")
+  taskType        String?   @map("task_type")
+  name            String
+  description     String?
+  ownerUserId     String?   @map("owner_user_id")
+  status          String    @default("not_started")
+  plannedStartDate DateTime? @map("planned_start_date")
+  plannedEndDate  DateTime? @map("planned_end_date")
+  actualStartDate DateTime? @map("actual_start_date")
+  actualEndDate   DateTime? @map("actual_end_date")
+  durationDays    Int?      @map("duration_days")
+  percentComplete Decimal?  @map("percent_complete")
+  critical        Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  site       Site    @relation(fields: [siteId], references: [id])
+  parentTask Task?   @relation("TaskChildren", fields: [parentTaskId], references: [id])
+  children   Task[]  @relation("TaskChildren")
+  ownerUser  User?   @relation("TaskOwner", fields: [ownerUserId], references: [id])
+
+  predecessorDependencies TaskDependency[] @relation("DependencySuccessor")
+  successorDependencies   TaskDependency[] @relation("DependencyPredecessor")
+
+  @@index([siteId])
+  @@index([status])
+  @@map("tasks")
+}
+
+model TaskDependency {
+  id                  String   @id @default(uuid())
+  predecessorTaskId   String   @map("predecessor_task_id")
+  successorTaskId     String   @map("successor_task_id")
+  dependencyType      String   @default("FS") @map("dependency_type")
+  lagDays             Int      @default(0) @map("lag_days")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  predecessorTask Task @relation("DependencyPredecessor", fields: [predecessorTaskId], references: [id])
+  successorTask   Task @relation("DependencySuccessor", fields: [successorTaskId], references: [id])
+
+  @@unique([predecessorTaskId, successorTaskId])
+  @@map("task_dependencies")
+}
+
+// ---------------------------------------------------------------------------
+// Scoring & Forecasting
+// ---------------------------------------------------------------------------
+
+model ReadinessSnapshot {
+  id              String   @id @default(uuid())
+  siteId          String   @map("site_id")
+  score           Decimal
+  landScore       Decimal? @map("land_score")
+  utilityScore    Decimal? @map("utility_score")
+  permittingScore Decimal? @map("permitting_score")
+  environmentalScore Decimal? @map("environmental_score")
+  scheduleScore   Decimal? @map("schedule_score")
+  strategicScore  Decimal? @map("strategic_score")
+  computedAt      DateTime @default(now()) @map("computed_at")
+  scoringVersion  String   @map("scoring_version")
+  explanation     Json?
+
+  site Site @relation(fields: [siteId], references: [id])
+
+  @@index([siteId, computedAt])
+  @@map("readiness_snapshots")
+}
+
+model CapacityForecast {
+  id               String    @id @default(uuid())
+  siteId           String    @map("site_id")
+  scenarioId       String?   @map("scenario_id")
+  forecastDate     DateTime  @map("forecast_date")
+  expectedOnlineMw Decimal   @map("expected_online_mw")
+  confidenceLow    Decimal?  @map("confidence_low")
+  confidenceHigh   Decimal?  @map("confidence_high")
+  assumptionSet    Json?     @map("assumption_set")
+  computedAt       DateTime? @map("computed_at")
+
+  site     Site      @relation(fields: [siteId], references: [id])
+  scenario Scenario? @relation(fields: [scenarioId], references: [id])
+
+  @@index([siteId])
+  @@index([forecastDate])
+  @@map("capacity_forecasts")
+}
+
+model Scenario {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  baseType    String   @map("base_type")
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  createdBy   User?            @relation(fields: [createdById], references: [id])
+  forecasts   CapacityForecast[]
+
+  @@index([tenantId])
+  @@map("scenarios")
+}
+
+// ---------------------------------------------------------------------------
+// Documents
+// ---------------------------------------------------------------------------
+
+model Document {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  fileName     String?  @map("file_name")
+  storageKey   String?  @map("storage_key")
+  mimeType     String?  @map("mime_type")
+  fileSize     BigInt?  @map("file_size")
+  documentType String?  @map("document_type")
+  uploadedById String?  @map("uploaded_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant     Tenant         @relation(fields: [tenantId], references: [id])
+  uploadedBy User?          @relation(fields: [uploadedById], references: [id])
+  links      DocumentLink[]
+
+  @@index([tenantId])
+  @@map("documents")
+}
+
+model DocumentLink {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@index([entityType, entityId])
+  @@map("document_links")
+}
+
+// ---------------------------------------------------------------------------
+// Audit & Event History
+// ---------------------------------------------------------------------------
+
+model AuditEvent {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  actorUserId String?  @map("actor_user_id")
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  action      String
+  beforeState Json?    @map("before_state")
+  afterState  Json?    @map("after_state")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  actorUser User?  @relation(fields: [actorUserId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_events")
+}
