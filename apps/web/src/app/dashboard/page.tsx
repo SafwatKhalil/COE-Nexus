@@ -42,20 +42,18 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub, icon: Icon, trend, variant = 'default' }: StatCardProps) {
   const iconColors: Record<string, string> = {
-    default: 'bg-blue-50 text-blue-600',
-    warning: 'bg-amber-50 text-amber-600',
-    danger: 'bg-red-50 text-red-600',
-    success: 'bg-emerald-50 text-emerald-600',
+    default: 'text-muted-foreground',
+    warning: 'text-amber-500',
+    danger: 'text-red-500',
+    success: 'text-emerald-500',
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow duration-200">
+    <Card>
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-3">
           <span className="text-sm text-muted-foreground font-medium">{label}</span>
-          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', iconColors[variant])}>
-            <Icon className="w-4 h-4" />
-          </div>
+          <Icon className={cn('w-4 h-4 mt-0.5', iconColors[variant])} />
         </div>
         <div className="text-2xl font-bold text-foreground tabular-nums">{value}</div>
         <div className="flex items-center gap-2 mt-1">
@@ -192,13 +190,13 @@ export default function DashboardPage() {
                       .map(([stage, count]) => {
                         const pct = Math.round(((count as number) / s.totalSites) * 100)
                         const stageBadgeClass: Record<string, string> = {
-                          prospect: 'stage-badge-prospect',
-                          feasibility: 'stage-badge-feasibility',
-                          entitlement: 'stage-badge-entitlement',
-                          development: 'stage-badge-development',
-                          construction: 'stage-badge-construction',
-                          commissioning: 'stage-badge-commissioning',
-                          operational: 'stage-badge-operational',
+                          prospect: 'stage-early',
+                          feasibility: 'stage-early',
+                          entitlement: 'stage-active',
+                          development: 'stage-active',
+                          construction: 'stage-active',
+                          commissioning: 'stage-live',
+                          operational: 'stage-live',
                         }
                         return (
                           <div key={stage} className="flex items-center gap-3 py-1.5">

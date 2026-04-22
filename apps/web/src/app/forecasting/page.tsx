@@ -1,17 +1,18 @@
 import { AppShell } from '@/components/layout/app-shell'
 import { Topbar } from '@/components/layout/topbar'
 import { Card, CardContent } from '@/components/ui/card'
+import { Construction } from 'lucide-react'
 
 export default function Page() {
   return (
     <AppShell>
-      <Topbar title="forecasting" description="Coming in the next sprint" />
+      <Topbar title="Forecasting" description="Capacity and delivery timeline projections" />
       <div className="flex-1 p-6">
         <Card>
           <CardContent className="py-20 text-center text-muted-foreground">
-            <div className="text-4xl mb-4">🚧</div>
-            <div className="text-sm font-medium">forecasting module</div>
-            <div className="text-xs mt-1">Backend API is live — UI in progress</div>
+            <Construction className="w-8 h-8 mx-auto mb-4 opacity-30" />
+            <div className="text-sm font-medium">Forecasting module</div>
+            <div className="text-xs mt-1 opacity-60">Backend API is live — UI in progress</div>
           </CardContent>
         </Card>
       </div>
