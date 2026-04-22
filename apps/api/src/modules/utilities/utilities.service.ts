@@ -69,6 +69,22 @@ export class CreateUtilityDto {
 export class UtilitiesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAll(tenantId: string, filters: { type?: string; status?: string }) {
+    const { type, status } = filters
+    return this.prisma.utility.findMany({
+      where: {
+        site: { tenantId, deletedAt: null },
+        ...(type && { utilityType: type }),
+        ...(status && { status }),
+      },
+      include: {
+        powerDetails: true,
+        site: { select: { id: true, name: true, region: true } },
+      },
+      orderBy: [{ utilityType: 'asc' }, { status: 'asc' }],
+    })
+  }
+
   async create(tenantId: string, siteId: string, dto: CreateUtilityDto) {
     await this.verifySiteOwnership(tenantId, siteId)
     const { powerDetails, estimatedDeliveryDate, ...rest } = dto
